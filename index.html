@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aethe Premium Service</title>
+    <title>aethestore Premium</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -95,12 +96,13 @@
         .header-section { margin-bottom: 40px; }
 
         .header-section h1 {
-            font-size: 40px;
-            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace; /* Твой любимый шрифт */
+            font-size: 36px;
+            font-weight: 800;
             margin: 0;
             color: var(--accent-color);
             letter-spacing: -1px;
-            text-transform: uppercase;
+            text-transform: none; /* Маленькие буквы */
             min-height: 54px;
             display: flex;
             align-items: center;
@@ -109,9 +111,9 @@
         .cursor {
             display: inline-block;
             width: 3px;
-            height: 34px;
+            height: 30px;
             background-color: var(--accent-color);
-            margin-left: 8px;
+            margin-left: 5px;
             animation: blink 0.7s infinite;
         }
 
@@ -253,29 +255,29 @@
         };
 
         function runTypewriter() {
-            const words = ["AETHE", "SERVICE ;)"];
+            const words = ["aethestore"]; // Только маленькими
             const container = document.getElementById('text-node');
-            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 350;
+            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 300;
 
             function type() {
                 const currentWord = words[wordIndex];
                 if (isDeleting) {
                     container.innerHTML = currentWord.substring(0, charIndex - 1);
                     charIndex--;
-                    typeSpeed = 120;
+                    typeSpeed = 100;
                 } else {
                     container.innerHTML = currentWord.substring(0, charIndex + 1);
                     charIndex++;
-                    typeSpeed = 350;
+                    typeSpeed = 300;
                 }
 
                 if (!isDeleting && charIndex === currentWord.length) {
                     isDeleting = true;
-                    typeSpeed = (wordIndex === 0) ? 2500 : 2000;
+                    typeSpeed = 3000; // Пауза в конце
                 } else if (isDeleting && charIndex === 0) {
                     isDeleting = false;
                     wordIndex = (wordIndex + 1) % words.length;
-                    typeSpeed = 600;
+                    typeSpeed = 500;
                 }
                 setTimeout(type, typeSpeed);
             }
@@ -315,7 +317,14 @@
         }
 
         function sendDataToBot() {
-            const data = { brand: document.getElementById('inp-brand').value, device: document.getElementById('inp-model').value, phone: document.getElementById('inp-phone').value, location: document.getElementById('inp-location').value, problem: document.getElementById('inp-issue').value };
+            const data = { 
+                lang: localStorage.getItem('aethe_lang') || 'en',
+                brand: document.getElementById('inp-brand').value, 
+                device: document.getElementById('inp-model').value, 
+                phone: document.getElementById('inp-phone').value, 
+                location: document.getElementById('inp-location').value, 
+                problem: document.getElementById('inp-issue').value 
+            };
             if (!data.device || !data.phone) {
                 tg.HapticFeedback.notificationOccurred('error');
                 tg.showAlert("Please fill in the required fields!");
