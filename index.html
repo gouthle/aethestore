@@ -73,30 +73,31 @@
             border-color: var(--accent-color);
         }
 
-        /* --- ЗАГОЛОВОК С ЦИКЛИЧНОЙ ПЕЧАТЬЮ --- */
+        /* --- ЗАГОЛОВОК С ЦИКЛИЧНОЙ АНИМАЦИЕЙ ПЕЧАТИ --- */
         .header-section {
             margin-bottom: 40px;
         }
 
         .header-section h1 {
-            font-size: 44px;
+            font-size: 40px; /* Немного уменьшил, чтобы ключ влезал в строку на узких экранах */
             font-weight: 900;
             margin: 0;
             color: var(--accent-color);
-            letter-spacing: -1.5px;
+            letter-spacing: -1px;
             text-transform: uppercase;
             min-height: 54px;
             display: flex;
             align-items: center;
+            white-space: nowrap;
         }
 
         /* Мигающая палочка (курсор) */
         .cursor {
             display: inline-block;
             width: 3px;
-            height: 38px;
+            height: 34px;
             background-color: var(--accent-color);
-            margin-left: 5px;
+            margin-left: 8px;
             animation: blink 0.7s infinite;
         }
 
@@ -277,35 +278,38 @@
             }
         };
 
-        // Анимация печатающегося текста (AETHE <-> SERVICE)
+        // Анимация печатающегося текста (AETHE <-> SERVICE 🔧)
         function runTypewriter() {
-            const words = ["AETHE", "SERVICE"];
+            const words = ["AETHE", "SERVICE🔧"];
             const container = document.getElementById('text-node');
             let wordIndex = 0;
             let charIndex = 0;
             let isDeleting = false;
-            let typeSpeed = 250; // Медленная печать
+            let typeSpeed = 350; // Еще медленнее для солидности
 
             function type() {
                 const currentWord = words[wordIndex];
                 
                 if (isDeleting) {
-                    container.innerHTML = currentWord.substring(0, charIndex - 1);
+                    // При стирании проверяем, не стираем ли мы эмодзи (оно занимает 2 позиции)
+                    const sub = currentWord.substring(0, charIndex - 1);
+                    container.innerHTML = sub;
                     charIndex--;
-                    typeSpeed = 100; // Стирание быстрее
+                    typeSpeed = 120; 
                 } else {
                     container.innerHTML = currentWord.substring(0, charIndex + 1);
                     charIndex++;
-                    typeSpeed = 250; // Печать медленнее
+                    typeSpeed = 350; 
                 }
 
                 if (!isDeleting && charIndex === currentWord.length) {
                     isDeleting = true;
-                    typeSpeed = 2000; // Пауза на дочитаться
+                    // Пауза на AETHE дольше (2.5 сек), на SERVICE (2 сек)
+                    typeSpeed = (wordIndex === 0) ? 2500 : 2000; 
                 } else if (isDeleting && charIndex === 0) {
                     isDeleting = false;
                     wordIndex = (wordIndex + 1) % words.length;
-                    typeSpeed = 500;
+                    typeSpeed = 600;
                 }
 
                 setTimeout(type, typeSpeed);
