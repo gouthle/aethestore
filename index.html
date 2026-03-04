@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
+        button { background: #3390ec; color: white; border: none; padding: 10px 20px; width: 100%; border-radius: 8px; cursor: pointer; }
+        input { width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h3>Заявка в To Go Service</h3>
+    <input type="text" id="device" placeholder="Устройство (напр. iPhone 13)">
+    <input type="text" id="problem" placeholder="Что сломалось?">
+    <button onclick="sendData()">Отправить заявку</button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
+
+        function sendData() {
+            let data = {
+                device: document.getElementById('device').value,
+                problem: document.getElementById('problem').value
+            };
+            // Отправляем данные боту и закрываем окно
+            tg.sendData(JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
