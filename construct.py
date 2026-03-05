@@ -11,16 +11,24 @@ from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 # ==========================================
 # 1. CONFIGURATION
 # ==========================================
-API_TOKEN = os.getenv('BOT_TOKEN', '7719279464:AAHcG3fDRHAmX6jH8pTtT2_Zt6CyFhP6--8').strip()
-ADMIN_ID = int(os.getenv('ADMIN_ID', 931275762))
-WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_ultra_v2'
+# Берем данные из окружения. Если их нет - бот выдаст ошибку, но не упадет сразу.
+API_TOKEN = os.getenv('BOT_TOKEN', '').strip()
+ADMIN_ID_RAW = os.getenv('ADMIN_ID', '0').strip()
+ADMIN_ID = int(ADMIN_ID_RAW) if ADMIN_ID_RAW.isdigit() else 0
+
+WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_ultra_v3'
 PORT = int(os.getenv('PORT', 10000))
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
 
-# --- HTTP SERVER FOR RENDER (Free Tier Keep-Alive) ---
+# Проверка токена перед запуском
+if not API_TOKEN:
+    logging.error("!!! КРИТИЧЕСКАЯ ОШИБКА: BOT_TOKEN не найден в Environment Variables !!!")
+
+bot = Bot(token=API_TOKEN) if API_TOKEN else None
+dp = Dispatcher(bot) if bot else None
+
+# --- HTTP SERVER ДЛЯ RENDER / CODESPACES (Keep-Alive) ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -29,8 +37,11 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args): return
 
 def run_server():
-    server = HTTPServer(('0.0.0.0', PORT), HealthCheckHandler)
-    server.serve_forever()
+    try:
+        server = HTTPServer(('0.0.0.0', PORT), HealthCheckHandler)
+        server.serve_forever()
+    except Exception as e:
+        logging.error(f"Server error: {e}")
 
 threading.Thread(target=run_server, daemon=True).start()
 
@@ -138,7 +149,7 @@ async def handle_webapp_data(m: types.Message):
         s = STRINGS[lang]
         
         raw_loc = data.get('location', '')
-        geo_link = f'<a href="https://www.google.com/maps?q={raw_loc.replace("📍", "").strip()}">Google Maps</a>' if "📍" in raw_loc else raw_loc
+        geo_link = f'<a href="http://google.com/maps?q={raw_loc.replace("📍", "").strip()}">Google Maps</a>' if "📍" in raw_loc else raw_loc
         phone = data.get('phone', '').strip()
         phone_link = f'<a href="tel:{phone}">{phone}</a>'
 
@@ -181,34 +192,29 @@ async def admin_action(c: types.CallbackQuery):
     try:
         _, act, oid, cid = c.data.split('_')
         l = user_langs.get(int(cid), 'en')
+        status = "✅ CONFIRMED" if act == 'ok' else "🚗 MASTER ON WAY" if act == 'way' else "❌ DECLINED"
         
         if act == 'ok':
-            status = "✅ CONFIRMED"
             await bot.send_message(int(cid), STRINGS[l]['user_confirmed'].format(oid))
         elif act == 'way':
-            status = "🚗 MASTER ON WAY"
             await bot.send_message(int(cid), STRINGS[l]['user_on_way'], parse_mode="HTML")
         else:
-            status = "❌ DECLINED"
             await bot.send_message(int(cid), STRINGS[l]['user_declined'].format(oid))
 
         await c.answer(status)
         
-        # ОЧИСТКА: Используем c.message.text (без тегов) и добавляем форматирование заново
-        clean_text = c.message.text
-        final_text = f"🚨 <b>{clean_text.splitlines()[0]}</b>\n\n" + "\n".join(clean_text.splitlines()[2:])
-        final_text += f"\n\n{STRINGS[l]['status_final']}<b>{status}</b>"
+        # Пересборка БЕЗ тегов из старого сообщения
+        original_lines = c.message.text.splitlines()
+        new_report = f"🚨 <b>{original_lines[0]}</b>\n\n"
+        for line in original_lines[2:7]:
+            new_report += f"{line}\n"
+        new_report += f"\n{STRINGS[l]['status_final']}<b>{status}</b>"
         
-        await bot.edit_message_text(
-            text=final_text,
-            chat_id=ADMIN_ID,
-            message_id=c.message.message_id,
-            parse_mode="HTML",
-            disable_web_page_preview=True
-        )
+        await bot.edit_message_text(new_report, ADMIN_ID, c.message.message_id, parse_mode="HTML", disable_web_page_preview=True)
     except Exception as e:
         logging.error(f"Admin action error: {e}")
 
 if __name__ == '__main__':
-    print("--- aethestore Service Bot is Running ---")
-    executor.start_polling(dp, skip_updates=True)
+    if dp:
+        print("--- aethestore Service Bot is Running ---")
+        executor.start_polling(dp, skip_updates=True)

@@ -16,7 +16,7 @@
             --main-text: #ffffff;
             --hint-text: rgba(255, 255, 255, 0.5);
             --line-color: rgba(255, 255, 255, 0.15);
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             --card-bg: rgba(255, 255, 255, 0.05);
         }
 
@@ -29,7 +29,7 @@
             display: flex;
             justify-content: center;
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
             position: relative;
         }
 
@@ -69,7 +69,7 @@
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
             animation: skeleton-load 1.5s infinite;
         }
         @keyframes skeleton-load {
@@ -85,7 +85,7 @@
             flex-direction: column;
             box-sizing: border-box;
             z-index: 1;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
         /* --- ЯЗЫК --- */
@@ -106,7 +106,7 @@
             font-weight: 700;
             cursor: pointer;
             backdrop-filter: blur(10px);
-            transition: var(--transition);
+            transition: 0.3s;
         }
 
         .lang-button.active {
@@ -115,9 +115,8 @@
             border-color: var(--accent-color);
         }
 
-        /* --- ПЕЧАТЬ --- */
+        /* --- ЗАГОЛОВОК --- */
         .header-section { margin-bottom: 40px; }
-
         .header-section h1 {
             font-family: 'JetBrains Mono', monospace;
             font-size: 36px;
@@ -129,7 +128,6 @@
             display: flex;
             align-items: center;
         }
-
         .cursor {
             display: inline-block;
             width: 3px;
@@ -138,58 +136,16 @@
             margin-left: 5px;
             animation: blink 0.7s infinite;
         }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        .header-section p {
-            font-size: 13px;
-            margin: 5px 0 0 0;
-            color: var(--hint-text);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .header-section p { font-size: 13px; margin: 5px 0 0 0; color: var(--hint-text); text-transform: uppercase; letter-spacing: 2px; }
 
         /* --- ПОЛЯ --- */
         .input-group { margin-bottom: 25px; }
-
-        .input-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 8px;
-        }
-
-        input, select {
-            width: 100%;
-            background: transparent;
-            border: none;
-            border-bottom: 1.5px solid var(--line-color);
-            padding: 12px 0;
-            color: #ffffff;
-            font-size: 17px;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+        input, select { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--line-color); padding: 12px 0; color: #ffffff; font-size: 17px; outline: none; }
         input:focus { border-bottom-color: var(--accent-color); }
-
         .location-row { display: flex; gap: 10px; align-items: center; }
-
-        .geo-btn {
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid var(--line-color);
-            color: white;
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 18px;
-            backdrop-filter: blur(10px);
-        }
+        .geo-btn { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line-color); color: white; padding: 10px; border-radius: 12px; font-size: 18px; }
 
         .submit-btn {
             margin-top: 20px;
@@ -203,13 +159,6 @@
             text-transform: uppercase;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
-            animation: pulse 3s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3); }
-            50% { box-shadow: 0 4px 30px rgba(255, 140, 0, 0.6); }
-            100% { box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3); }
         }
 
         /* --- ЭКРАН УСПЕХА --- */
@@ -217,22 +166,23 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-color);
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease;
         }
-        #lottie-check { width: 200px; height: 200px; }
+        #lottie-check { width: 180px; height: 180px; }
         #success-text {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             color: var(--accent-color);
-            margin-top: 20px;
+            margin-top: 10px;
             text-align: center;
+            line-height: 1.4;
         }
 
         .fade-text { transition: opacity 0.3s ease; }
@@ -252,12 +202,10 @@
         <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
         <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
         <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
-        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
         <div class="skeleton" style="height: 60px; border-radius: 18px;"></div>
     </div>
 
-    <div class="container" id="main-app" style="opacity: 0; display: none;">
-        
+    <div class="container" id="main-app" style="opacity: 0; display: none; transform: translateY(10px);">
         <div class="language-container">
             <button id="lang-en" class="lang-button" onclick="setLanguage('en')">EN</button>
             <button id="lang-pl" class="lang-button" onclick="setLanguage('pl')">PL</button>
@@ -265,7 +213,7 @@
         </div>
 
         <div class="header-section">
-            <h1 id="typewriter-title"><span id="text-node"></span><span class="cursor"></span></h1>
+            <h1><span id="text-node"></span><span class="cursor"></span></h1>
             <p id="app-subtitle" class="fade-text">Premium Service</p>
         </div>
 
@@ -290,27 +238,24 @@
         </div>
 
         <div class="input-group">
-            <label id="lbl-geo" class="fade-text">Location / Address</label>
+            <label id="lbl-geo" class="fade-text">Location</label>
             <div class="location-row">
-                <input type="text" id="inp-location" placeholder="Enter address or tap pin">
+                <input type="text" id="inp-location" placeholder="Address or tap pin">
                 <button class="geo-btn" onclick="getLocation()">📍</button>
             </div>
         </div>
 
         <div class="input-group">
             <label id="lbl-issue" class="fade-text">Problem Description</label>
-            <input type="text" id="inp-issue" placeholder="What needs to be fixed?">
+            <input type="text" id="inp-issue" placeholder="What to fix?">
         </div>
 
-        <button class="submit-btn fade-text" id="btn-submit" onclick="sendDataToBot()">
-            Confirm Booking
-        </button>
-
+        <button class="submit-btn fade-text" id="btn-submit" onclick="sendDataToBot()">Confirm Booking</button>
     </div>
 
     <div id="success-screen">
         <div id="lottie-check"></div>
-        <div id="success-text">BOOKING CONFIRMED<br>WE WILL CONTACT YOU SOON</div>
+        <div id="success-text">ZAMÓWIENIE POTWIERDZONE<br>SKONTAKTUJEMY SIĘ WKRÓTCE</div>
     </div>
 
     <script>
@@ -319,15 +264,15 @@
         tg.setHeaderColor('#000000');
 
         const translations = {
-            en: { subtitle: "Premium Service", brand: "Device Brand", model: "Model & Memory", model_ph: "e.g. 16 Pro, 256GB", phone: "Phone Number", geo: "Location / Address", geo_ph: "Enter address or tap pin", issue: "Problem Description", issue_ph: "What needs to be fixed?", submit: "Confirm Booking", success: "BOOKING CONFIRMED<br>WE WILL CONTACT YOU SOON" },
-            pl: { subtitle: "Serwis Premium", brand: "Marka urządzenia", model: "Model i Pamięć", model_ph: "np. 16 Pro, 256GB", phone: "Numer telefonu", geo: "Lokalizacja / Adres", geo_ph: "Wpisz adres lub kliknij pinezkę", issue: "Opis problemu", issue_ph: "Co należy naprawić?", submit: "Złóż zamówienie", success: "ZAMÓWIENIE POTWIERDZONE<br>SKONTAKTUJEMY SIĘ WKRÓTCE" },
-            ru: { subtitle: "Премиальный сервис", brand: "Бренд устройства", model: "Модель и Память", model_ph: "напр. 16 Pro, 256ГБ", phone: "Номер телефона", geo: "Локация / Адрес", geo_ph: "Введите адрес или нажмите на пин", issue: "Описание проблемы", issue_ph: "Что нужно починить?", submit: "Подтвердить запись", success: "ЗАПИСЬ ПОДТВЕРЖДЕНА<br>МЫ СКОРО С ВАМИ СВЯЖЕМСЯ" }
+            en: { subtitle: "Premium Service", brand: "Device Brand", model: "Model & Memory", model_ph: "e.g. 16 Pro, 256GB", phone: "Phone Number", geo: "Location", geo_ph: "Address or tap pin", issue: "Problem Description", issue_ph: "What to fix?", submit: "Confirm Booking", success: "BOOKING CONFIRMED<br>WE WILL CONTACT YOU SOON" },
+            pl: { subtitle: "Serwis Premium", brand: "Marka urządzenia", model: "Model i Pamięć", model_ph: "np. 16 Pro, 256GB", phone: "Numer telefonu", geo: "Lokalizacja", geo_ph: "Wpisz adres lub pinezkę", issue: "Opis problemu", issue_ph: "Co naprawić?", submit: "Złóż zamówienie", success: "ZAMÓWIENIE POTWIERDZONE<br>SKONTAKTUJEMY SIĘ WKRÓTCE" },
+            ru: { subtitle: "Премиальный сервис", brand: "Бренд устройства", model: "Модель и Память", model_ph: "напр. 16 Pro, 256ГБ", phone: "Номер телефона", geo: "Локация", geo_ph: "Адрес или пин", issue: "Описание проблемы", issue_ph: "Что починить?", submit: "Подтвердить запись", success: "ЗАПИСЬ ПОДТВЕРЖДЕНА<br>МЫ СКОРО С ВАМИ СВЯЖЕМСЯ" }
         };
 
         function runTypewriter() {
             const words = ["aethestore", "service"];
             const container = document.getElementById('text-node');
-            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 200;
+            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 150;
 
             function type() {
                 const currentWord = words[wordIndex];
@@ -340,10 +285,9 @@
                     charIndex++;
                     typeSpeed = 150;
                 }
-
                 if (!isDeleting && charIndex === currentWord.length) {
                     isDeleting = true;
-                    typeSpeed = 2000;
+                    typeSpeed = 2500;
                 } else if (isDeleting && charIndex === 0) {
                     isDeleting = false;
                     wordIndex = (wordIndex + 1) % words.length;
@@ -357,12 +301,9 @@
         function setLanguage(lang) {
             localStorage.setItem('aethe_lang', lang);
             document.querySelectorAll('.lang-button').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById('lang-' + lang);
-            if(btn) btn.classList.add('active');
-            
+            document.getElementById('lang-' + lang).classList.add('active');
             const targets = document.querySelectorAll('.fade-text');
             targets.forEach(t => t.classList.add('hidden'));
-            
             setTimeout(() => {
                 const t = translations[lang];
                 document.getElementById('app-subtitle').innerText = t.subtitle;
@@ -384,33 +325,37 @@
             if (navigator.geolocation) {
                 tg.HapticFeedback.impactOccurred('medium');
                 navigator.geolocation.getCurrentPosition((pos) => {
-                    const lat = pos.coords.latitude.toFixed(5), lon = pos.coords.longitude.toFixed(5);
-                    document.getElementById('inp-location').value = `📍 ${lat}, ${lon}`;
-                }, () => tg.showAlert("Location access denied."));
+                    document.getElementById('inp-location').value = `📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+                });
             }
         }
 
         function showSuccess() {
-            document.getElementById('main-app').style.display = 'none';
+            const app = document.getElementById('main-app');
             const screen = document.getElementById('success-screen');
-            screen.style.display = 'flex';
-            setTimeout(() => screen.style.opacity = '1', 50);
+            app.style.opacity = '0';
+            app.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                app.style.display = 'none';
+                screen.style.display = 'flex';
+                setTimeout(() => screen.style.opacity = '1', 50);
 
-            lottie.loadAnimation({
-                container: document.getElementById('lottie-check'),
-                renderer: 'svg',
-                loop: false,
-                autoplay: true,
-                path: 'https://lottie.host/9c24095b-3b49-4786-8a7e-128c743e4987/j6IuE9G4W9.json'
-            });
+                lottie.loadAnimation({
+                    container: document.getElementById('lottie-check'),
+                    renderer: 'svg',
+                    loop: false,
+                    autoplay: true,
+                    path: 'https://lottie.host/9c24095b-3b49-4786-8a7e-128c743e4987/j6IuE9G4W9.json'
+                });
 
-            tg.HapticFeedback.notificationOccurred('success');
-            setTimeout(() => tg.close(), 4000);
+                tg.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => tg.close(), 4000);
+            }, 800);
         }
 
         function sendDataToBot() {
             const data = { 
-                lang: localStorage.getItem('aethe_lang') || 'en',
                 brand: document.getElementById('inp-brand').value, 
                 device: document.getElementById('inp-model').value, 
                 phone: document.getElementById('inp-phone').value, 
@@ -419,7 +364,6 @@
             };
             if (!data.device || !data.phone) {
                 tg.HapticFeedback.notificationOccurred('error');
-                tg.showAlert("Please fill in the required fields!");
                 return;
             }
             tg.HapticFeedback.impactOccurred('heavy');
@@ -428,15 +372,17 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Имитация загрузки
             setTimeout(() => {
                 document.getElementById('skeleton-screen').style.display = 'none';
                 const app = document.getElementById('main-app');
                 app.style.display = 'flex';
-                setTimeout(() => app.style.opacity = '1', 50);
+                setTimeout(() => {
+                    app.style.opacity = '1';
+                    app.style.transform = 'translateY(0)';
+                }, 50);
                 runTypewriter();
                 setLanguage(localStorage.getItem('aethe_lang') || 'en');
-            }, 1000);
+            }, 1200);
         });
     </script>
 </body>
