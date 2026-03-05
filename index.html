@@ -16,8 +16,7 @@
             --main-text: #ffffff;
             --hint-text: rgba(255, 255, 255, 0.5);
             --line-color: rgba(255, 255, 255, 0.15);
-            --transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            --card-bg: rgba(255, 255, 255, 0.05);
+            --transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
@@ -29,183 +28,68 @@
             display: flex;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
             position: relative;
         }
 
-        /* --- АНИМИРОВАННЫЙ ФОН --- */
-        .bg-blobs {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            filter: blur(80px);
-            opacity: 0.4;
-        }
+        /* --- БЛОБЫ --- */
+        .bg-blobs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; filter: blur(80px); opacity: 0.4; }
+        .blob { position: absolute; background: var(--accent-color); border-radius: 50%; animation: move 20s infinite alternate; }
+        .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
+        .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -100px; opacity: 0.6; }
+        @keyframes move { from { transform: translate(0, 0) scale(1); } to { transform: translate(50px, 100px) scale(1.2); } }
 
-        .blob {
-            position: absolute;
-            background: var(--accent-color);
-            border-radius: 50%;
-            animation: move 20s infinite alternate;
-        }
+        /* --- SKELETON --- */
+        .skeleton { background: rgba(255, 255, 255, 0.05); border-radius: 12px; position: relative; overflow: hidden; }
+        .skeleton::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent); animation: skeleton-load 1.5s infinite; }
+        @keyframes skeleton-load { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-        .blob-1 { width: 300px; height: 300px; top: -100px; right: -50px; animation-duration: 25s; }
-        .blob-2 { width: 250px; height: 250px; bottom: -50px; left: -100px; animation-duration: 30s; opacity: 0.6; }
+        .container { width: 100%; max-width: 450px; padding: 20px 25px 50px 25px; display: flex; flex-direction: column; box-sizing: border-box; z-index: 1; transition: var(--transition); }
 
-        @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(50px, 100px) scale(1.2); }
-        }
+        /* --- UI ELEMENTS --- */
+        .language-container { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 8px; }
+        .lang-button { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-color); color: var(--main-text); padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer; backdrop-filter: blur(10px); }
+        .lang-button.active { background: var(--accent-color); color: #000000; border-color: var(--accent-color); }
 
-        /* --- SKELETON LOAD --- */
-        .skeleton {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-        }
-        .skeleton::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-            animation: skeleton-load 1.5s infinite;
-        }
-        @keyframes skeleton-load {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .container {
-            width: 100%;
-            max-width: 450px;
-            padding: 20px 25px 50px 25px;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            z-index: 1;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-
-        /* --- ЯЗЫК --- */
-        .language-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 20px;
-            gap: 8px;
-        }
-
-        .lang-button {
-            background: var(--card-bg);
-            border: 1px solid var(--line-color);
-            color: var(--main-text);
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: 0.3s;
-        }
-
-        .lang-button.active {
-            background: var(--accent-color);
-            color: #000000;
-            border-color: var(--accent-color);
-        }
-
-        /* --- ЗАГОЛОВОК --- */
         .header-section { margin-bottom: 40px; }
-        .header-section h1 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 36px;
-            font-weight: 800;
-            margin: 0;
-            color: var(--accent-color);
-            letter-spacing: -1px;
-            min-height: 54px;
-            display: flex;
-            align-items: center;
-        }
-        .cursor {
-            display: inline-block;
-            width: 3px;
-            height: 30px;
-            background-color: var(--accent-color);
-            margin-left: 5px;
-            animation: blink 0.7s infinite;
-        }
+        .header-section h1 { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 800; margin: 0; color: var(--accent-color); min-height: 40px; }
+        .cursor { display: inline-block; width: 3px; height: 25px; background-color: var(--accent-color); margin-left: 5px; animation: blink 0.7s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .header-section p { font-size: 13px; margin: 5px 0 0 0; color: var(--hint-text); text-transform: uppercase; letter-spacing: 2px; }
 
-        /* --- ПОЛЯ --- */
         .input-group { margin-bottom: 25px; }
         .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
-        input, select { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--line-color); padding: 12px 0; color: #ffffff; font-size: 17px; outline: none; }
+        
+        input, select { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--line-color); padding: 12px 0; color: #ffffff; font-size: 16px; outline: none; border-radius: 0; }
         input:focus { border-bottom-color: var(--accent-color); }
-        .location-row { display: flex; gap: 10px; align-items: center; }
-        .geo-btn { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line-color); color: white; padding: 10px; border-radius: 12px; font-size: 18px; }
 
-        .submit-btn {
-            margin-top: 20px;
-            background-color: var(--accent-color);
-            color: #000000;
-            border: none;
-            border-radius: 18px;
-            padding: 20px;
-            font-size: 17px;
-            font-weight: 800;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
-        }
+        /* ФИКС КНОПКИ ГЕО */
+        .location-row { position: relative; display: flex; align-items: center; }
+        .location-row input { padding-right: 45px; } /* Место под кнопку */
+        .geo-btn { position: absolute; right: 0; bottom: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--line-color); color: white; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; backdrop-filter: blur(5px); }
 
-        /* --- ЭКРАН УСПЕХА --- */
-        #success-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
+        .submit-btn { margin-top: 20px; background-color: var(--accent-color); color: #000000; border: none; border-radius: 18px; padding: 20px; font-size: 17px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+
+        /* SUCCESS SCREEN */
+        #success-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%); flex-direction: column; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.8s ease; }
         #lottie-check { width: 180px; height: 180px; }
-        #success-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--accent-color);
-            margin-top: 10px;
-            text-align: center;
-            line-height: 1.4;
-        }
+        #success-text { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: var(--accent-color); text-align: center; margin-top: 15px; padding: 0 20px; }
 
-        .fade-text { transition: opacity 0.3s ease; }
-        .hidden { opacity: 0; }
+        .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div class="bg-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
+    <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
     <div id="skeleton-screen" class="container">
         <div class="skeleton" style="height: 30px; width: 100px; align-self: flex-end; margin-bottom: 20px;"></div>
-        <div class="skeleton" style="height: 60px; width: 80%; margin-bottom: 40px;"></div>
-        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
-        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
-        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 50px; width: 70%; margin-bottom: 40px;"></div>
+        <div class="skeleton" style="height: 45px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 45px; margin-bottom: 25px;"></div>
         <div class="skeleton" style="height: 60px; border-radius: 18px;"></div>
     </div>
 
-    <div class="container" id="main-app" style="opacity: 0; display: none; transform: translateY(10px);">
+    <div class="container" id="main-app" style="opacity: 0; display: none;">
         <div class="language-container">
             <button id="lang-en" class="lang-button" onclick="setLanguage('en')">EN</button>
             <button id="lang-pl" class="lang-button" onclick="setLanguage('pl')">PL</button>
@@ -214,11 +98,11 @@
 
         <div class="header-section">
             <h1><span id="text-node"></span><span class="cursor"></span></h1>
-            <p id="app-subtitle" class="fade-text">Premium Service</p>
+            <p id="app-subtitle">Premium Service</p>
         </div>
 
         <div class="input-group">
-            <label id="lbl-brand" class="fade-text">Device Brand</label>
+            <label id="lbl-brand">Device Brand</label>
             <select id="inp-brand">
                 <option value="iPhone">iPhone</option>
                 <option value="Samsung">Samsung</option>
@@ -228,17 +112,17 @@
         </div>
 
         <div class="input-group">
-            <label id="lbl-model" class="fade-text">Model & Memory</label>
+            <label id="lbl-model">Model & Memory</label>
             <input type="text" id="inp-model" placeholder="e.g. 16 Pro, 256GB">
         </div>
 
         <div class="input-group">
-            <label id="lbl-phone" class="fade-text">Phone Number</label>
+            <label id="lbl-phone">Phone Number</label>
             <input type="tel" id="inp-phone" placeholder="+48 ___ ___ ___">
         </div>
 
         <div class="input-group">
-            <label id="lbl-geo" class="fade-text">Location</label>
+            <label id="lbl-geo">Location</label>
             <div class="location-row">
                 <input type="text" id="inp-location" placeholder="Address or tap pin">
                 <button class="geo-btn" onclick="getLocation()">📍</button>
@@ -246,16 +130,16 @@
         </div>
 
         <div class="input-group">
-            <label id="lbl-issue" class="fade-text">Problem Description</label>
+            <label id="lbl-issue">Problem Description</label>
             <input type="text" id="inp-issue" placeholder="What to fix?">
         </div>
 
-        <button class="submit-btn fade-text" id="btn-submit" onclick="sendDataToBot()">Confirm Booking</button>
+        <button class="submit-btn" id="btn-submit" onclick="sendDataToBot()">Confirm Booking</button>
     </div>
 
     <div id="success-screen">
         <div id="lottie-check"></div>
-        <div id="success-text">ZAMÓWIENIE POTWIERDZONE<br>SKONTAKTUJEMY SIĘ WKRÓTCE</div>
+        <div id="success-text"></div>
     </div>
 
     <script>
@@ -272,28 +156,15 @@
         function runTypewriter() {
             const words = ["aethestore", "service"];
             const container = document.getElementById('text-node');
-            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 150;
+            let wordIndex = 0, charIndex = 0, isDeleting = false;
 
             function type() {
                 const currentWord = words[wordIndex];
-                if (isDeleting) {
-                    container.innerHTML = currentWord.substring(0, charIndex - 1);
-                    charIndex--;
-                    typeSpeed = 50;
-                } else {
-                    container.innerHTML = currentWord.substring(0, charIndex + 1);
-                    charIndex++;
-                    typeSpeed = 150;
-                }
-                if (!isDeleting && charIndex === currentWord.length) {
-                    isDeleting = true;
-                    typeSpeed = 2500;
-                } else if (isDeleting && charIndex === 0) {
-                    isDeleting = false;
-                    wordIndex = (wordIndex + 1) % words.length;
-                    typeSpeed = 500;
-                }
-                setTimeout(type, typeSpeed);
+                container.innerHTML = currentWord.substring(0, isDeleting ? charIndex-- : charIndex++);
+                let speed = isDeleting ? 50 : 150;
+                if (!isDeleting && charIndex > currentWord.length) { isDeleting = true; speed = 2000; }
+                else if (isDeleting && charIndex === 0) { isDeleting = false; wordIndex = (wordIndex + 1) % words.length; speed = 500; }
+                setTimeout(type, speed);
             }
             type();
         }
@@ -302,23 +173,18 @@
             localStorage.setItem('aethe_lang', lang);
             document.querySelectorAll('.lang-button').forEach(b => b.classList.remove('active'));
             document.getElementById('lang-' + lang).classList.add('active');
-            const targets = document.querySelectorAll('.fade-text');
-            targets.forEach(t => t.classList.add('hidden'));
-            setTimeout(() => {
-                const t = translations[lang];
-                document.getElementById('app-subtitle').innerText = t.subtitle;
-                document.getElementById('lbl-brand').innerText = t.brand;
-                document.getElementById('lbl-model').innerText = t.model;
-                document.getElementById('inp-model').placeholder = t.model_ph;
-                document.getElementById('lbl-phone').innerText = t.phone;
-                document.getElementById('lbl-geo').innerText = t.geo;
-                document.getElementById('inp-location').placeholder = t.geo_ph;
-                document.getElementById('lbl-issue').innerText = t.issue;
-                document.getElementById('inp-issue').placeholder = t.issue_ph;
-                document.getElementById('btn-submit').innerText = t.submit;
-                document.getElementById('success-text').innerHTML = t.success;
-                targets.forEach(t => t.classList.remove('hidden'));
-            }, 300);
+            const t = translations[lang];
+            document.getElementById('app-subtitle').innerText = t.subtitle;
+            document.getElementById('lbl-brand').innerText = t.brand;
+            document.getElementById('lbl-model').innerText = t.model;
+            document.getElementById('inp-model').placeholder = t.model_ph;
+            document.getElementById('lbl-phone').innerText = t.phone;
+            document.getElementById('lbl-geo').innerText = t.geo;
+            document.getElementById('inp-location').placeholder = t.geo_ph;
+            document.getElementById('lbl-issue').innerText = t.issue;
+            document.getElementById('inp-issue').placeholder = t.issue_ph;
+            document.getElementById('btn-submit').innerText = t.submit;
+            document.getElementById('success-text').innerHTML = t.success;
         }
 
         function getLocation() {
@@ -334,39 +200,23 @@
             const app = document.getElementById('main-app');
             const screen = document.getElementById('success-screen');
             app.style.opacity = '0';
-            app.style.transform = 'translateY(-10px)';
-            
             setTimeout(() => {
                 app.style.display = 'none';
                 screen.style.display = 'flex';
                 setTimeout(() => screen.style.opacity = '1', 50);
-
                 lottie.loadAnimation({
                     container: document.getElementById('lottie-check'),
-                    renderer: 'svg',
-                    loop: false,
-                    autoplay: true,
+                    renderer: 'svg', loop: false, autoplay: true,
                     path: 'https://lottie.host/9c24095b-3b49-4786-8a7e-128c743e4987/j6IuE9G4W9.json'
                 });
-
                 tg.HapticFeedback.notificationOccurred('success');
-                setTimeout(() => tg.close(), 4000);
+                setTimeout(() => tg.close(), 3500);
             }, 800);
         }
 
         function sendDataToBot() {
-            const data = { 
-                brand: document.getElementById('inp-brand').value, 
-                device: document.getElementById('inp-model').value, 
-                phone: document.getElementById('inp-phone').value, 
-                location: document.getElementById('inp-location').value, 
-                problem: document.getElementById('inp-issue').value 
-            };
-            if (!data.device || !data.phone) {
-                tg.HapticFeedback.notificationOccurred('error');
-                return;
-            }
-            tg.HapticFeedback.impactOccurred('heavy');
+            const data = { brand: document.getElementById('inp-brand').value, device: document.getElementById('inp-model').value, phone: document.getElementById('inp-phone').value, location: document.getElementById('inp-location').value, problem: document.getElementById('inp-issue').value };
+            if (!data.device || !data.phone) { tg.HapticFeedback.notificationOccurred('error'); tg.showAlert("Fill device & phone!"); return; }
             tg.sendData(JSON.stringify(data));
             showSuccess();
         }
@@ -376,10 +226,7 @@
                 document.getElementById('skeleton-screen').style.display = 'none';
                 const app = document.getElementById('main-app');
                 app.style.display = 'flex';
-                setTimeout(() => {
-                    app.style.opacity = '1';
-                    app.style.transform = 'translateY(0)';
-                }, 50);
+                setTimeout(() => app.style.opacity = '1', 50);
                 runTypewriter();
                 setLanguage(localStorage.getItem('aethe_lang') || 'en');
             }, 1200);
