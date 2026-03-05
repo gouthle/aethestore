@@ -48,10 +48,10 @@ threading.Thread(target=run_server, daemon=True).start()
 # --- СЛОВАРЬ ПЕРЕВОДОВ (Твой оригинал + добавки) ---
 STRINGS = {
     'en': {
-        'welcome': "Welcome to aethestore! 👋\nProfessional repair service.",
+        'welcome': "Welcome to AetheStore! 👋\nProfessional repair service.",
         'service_closed': "\n\n🌙 <b>Note: We are currently closed.</b> We will process your request tomorrow morning!",
         'btn_app': "🛠 Book a Repair", 'btn_about': "ℹ️ About Us", 'btn_lang': "🌐 Language",
-        'about_text': "💎 <b>aethestore Service</b>\nPremium electronics repair.\n📍 Rapid on-site service in Poland.",
+        'about_text': "💎 <b>AetheStore</b>\nPremium electronics repair.\n📍 Rapid on-site service in Poland.",
         'pay_msg': "Order #{} received! Please pay the deposit to confirm:",
         'pay_btn': "💳 Pay Deposit",
         'recept_msg': "💰 <b>Payment for #{}</b>\n\nSum: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nTap the button below after payment:",
@@ -62,17 +62,17 @@ STRINGS = {
         'adm_off_tag': "\n⚠️ <b>OFF-HOURS ORDER</b>",
         'adm_device': "📱 Device: ", 'adm_phone': "📞 Phone: ", 'adm_geo': "📍 Geo: ",
         'adm_issue': "🔧 Issue: ", 'adm_user': "👤 User: ",
-        'adm_confirm_btn': "✅ Confirm", 'adm_decline_btn': "❌ Decline", 'adm_way_btn': "🚗 On My Way",
+        'adm_confirm_btn': "✅ Confirmed", 'adm_decline_btn': "❌ Decline", 'adm_way_btn': "🚗 On My Way",
         'user_confirmed': "✅ Your payment for order #{} has been CONFIRMED!",
         'user_declined': "❌ Payment for order #{} was not found.",
         'user_on_way': "🚗 <b>Master is on the way!</b>\nExpect arrival in 20-40 minutes at your location.",
         'status_final': "🏁 STATUS: "
     },
     'ru': {
-        'welcome': "Привет в aethestore! 👋\nРемонт iPhone и техники.",
+        'welcome': "Добро пожаловать в AetheStore! 👋\nРемонт iPhone и техники.",
         'service_closed': "\n\n🌙 <b>Сейчас мы закрыты.</b> Мы обработаем вашу заявку завтра утром!",
         'btn_app': "🛠 Оформить ремонт", 'btn_about': "ℹ️ О нас", 'btn_lang': "🌐 Язык",
-        'about_text': "💎 <b>aethestore Service</b>\nПрофессиональный ремонт.\n📍 Выезд к клиенту по Кракову.",
+        'about_text': "💎 <b>AetheStore</b>\nПрофессиональный ремонт.\n📍 Выезд к клиенту по Кракову.",
         'pay_msg': "Заявка #{} принята! Внесите депозит:",
         'pay_btn': "💳 Оплатить депозит",
         'recept_msg': "💰 <b>Оплата заказа #{}</b>\n\nСумма: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nНажми после оплаты:",
@@ -90,10 +90,10 @@ STRINGS = {
         'status_final': "🏁 СТАТУС: "
     },
     'pl': {
-        'welcome': "Witaj w aethestore! 👋\nNaprawa sprzętu premium.",
+        'welcome': "Witaj w AetheStore! 👋\nNaprawa sprzętu premium.",
         'service_closed': "\n\n🌙 <b>Obecnie jesteśmy zamknięci.</b> Skontaktujemy się z Tobą jutro rano!",
         'btn_app': "🛠 Zleć naprawę", 'btn_about': "ℹ️ O nas", 'btn_lang': "🌐 Język",
-        'about_text': "💎 <b>aethestore Service</b>\nSpecjalistyczna naprawa.\n📍 Szybki dojazd do klienta.",
+        'about_text': "💎 <b>AetheStore</b>\nSpecjalistyczna naprawa.\n📍 Szybki dojazd do klienta.",
         'pay_msg': "Zlecenie #{} przyjęte! Wpłać depozyt:",
         'pay_btn': "💳 Zapłać depozyt",
         'recept_msg': "💰 <b>Płatność za #{}</b>\n\nKwota: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nKliknij po zapłaceniu:",
