@@ -11,20 +11,19 @@ from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 # ==========================================
 # 1. CONFIGURATION
 # ==========================================
-# Берем данные СТРОГО из Environment Variables для безопасности
+# Токен и ID админа берем из Environment на Render
 API_TOKEN = os.getenv('BOT_TOKEN', '').strip()
 ADMIN_ID_RAW = os.getenv('ADMIN_ID', '0').strip()
 ADMIN_ID = int(ADMIN_ID_RAW) if ADMIN_ID_RAW.isdigit() else 0
 
-# URL твоего Mini App
-WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_stable_v35'
+WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_ultra_v1'
 PORT = int(os.getenv('PORT', 10000))
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# --- HTTP SERVER FOR RENDER (Free Tier Keep-Alive) ---
+# --- МИНИ-СЕРВЕР (Для работы на бесплатном тарифе Render) ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -53,9 +52,10 @@ STRINGS = {
         'adm_title': "🚨 <b>NEW ORDER #{}</b>",
         'adm_device': "📱 Device: ", 'adm_phone': "📞 Phone: ", 'adm_geo': "📍 Geo: ",
         'adm_issue': "🔧 Issue: ", 'adm_user': "👤 User: ",
-        'adm_confirm_btn': "✅ Confirm", 'adm_decline_btn': "❌ Decline",
+        'adm_confirm_btn': "✅ Confirm", 'adm_decline_btn': "❌ Decline", 'adm_way_btn': "🚗 On My Way",
         'user_confirmed': "✅ Your payment for order #{} has been CONFIRMED!",
         'user_declined': "❌ Payment for order #{} was not found.",
+        'user_on_way': "🚗 <b>Master is on the way!</b>\nExpect arrival in 20-40 minutes at your location.",
         'status_final': "🏁 STATUS: "
     },
     'ru': {
@@ -71,9 +71,10 @@ STRINGS = {
         'adm_title': "🚨 <b>НОВАЯ ЗАЯВКА #{}</b>",
         'adm_device': "📱 Девайс: ", 'adm_phone': "📞 Тел: ", 'adm_geo': "📍 Гео: ",
         'adm_issue': "🔧 Проблема: ", 'adm_user': "👤 Юзер: ",
-        'adm_confirm_btn': "✅ Ок", 'adm_decline_btn': "❌ Нет",
+        'adm_confirm_btn': "✅ Ок", 'adm_decline_btn': "❌ Нет", 'adm_way_btn': "🚗 Выехал",
         'user_confirmed': "✅ Ваша оплата заказа #{} ПОДТВЕРЖДЕНА!",
         'user_declined': "❌ Оплата заказа #{} не найдена.",
+        'user_on_way': "🚗 <b>Мастер уже выехал!</b>\nОжидайте прибытия через 20-40 минут по вашему адресу.",
         'status_final': "🏁 СТАТУС: "
     },
     'pl': {
@@ -89,9 +90,10 @@ STRINGS = {
         'adm_title': "🚨 <b>NOWE ZLECENIE #{}</b>",
         'adm_device': "📱 Urządzenie: ", 'adm_phone': "📞 Telefon: ", 'adm_geo': "📍 Lok: ",
         'adm_issue': "🔧 Problem: ", 'adm_user': "👤 Klient: ",
-        'adm_confirm_btn': "✅ Ok", 'adm_decline_btn': "❌ Nie",
+        'adm_confirm_btn': "✅ Ok", 'adm_decline_btn': "❌ Nie", 'adm_way_btn': "🚗 Jadę",
         'user_confirmed': "✅ Wpłata za #{} POTWIERDZONA!",
         'user_declined': "❌ Płatność za #{} nie znaleziona.",
+        'user_on_way': "🚗 <b>Specjalista jest w drodze!</b>\nSpodziewaj się przyjazdu za 20-40 minut.",
         'status_final': "🏁 STATUS: "
     }
 }
@@ -139,9 +141,9 @@ async def handle_webapp_data(m: types.Message):
         s = STRINGS[lang]
         
         raw_loc = data.get('location', '')
-        geo_link = f'<a href="https://www.google.com/maps?q={raw_loc.replace("📍", "").strip()}">Google Maps</a>' if "📍" in raw_loc else raw_loc
-
-        # Номер телефона теперь кликабельный (tel:...)
+        geo_link = f'<a href="http://maps.google.com/?q={raw_loc.replace("📍", "").strip()}">Google Maps</a>' if "📍" in raw_loc else raw_loc
+        
+        # Делаем телефон кликабельным (tel:)
         phone = data.get('phone', '').strip()
         phone_link = f'<a href="tel:{phone}">{phone}</a>'
 
@@ -152,8 +154,10 @@ async def handle_webapp_data(m: types.Message):
                   f"{s['adm_issue']}{data.get('problem')}\n"
                   f"{s['adm_user']}@{m.from_user.username}")
 
-        adm_kb = InlineKeyboardMarkup().add(
+        # ПАНЕЛЬ АДМИНА: Ок, Выехал, Отмена
+        adm_kb = InlineKeyboardMarkup(row_width=2).add(
             InlineKeyboardButton(s['adm_confirm_btn'], callback_data=f"adm_ok_{oid}_{m.from_user.id}"),
+            InlineKeyboardButton(s['adm_way_btn'], callback_data=f"adm_way_{oid}_{m.from_user.id}"),
             InlineKeyboardButton(s['adm_decline_btn'], callback_data=f"adm_no_{oid}_{m.from_user.id}"))
 
         await bot.send_message(ADMIN_ID, report, parse_mode="HTML", reply_markup=adm_kb, disable_web_page_preview=True)
@@ -183,12 +187,20 @@ async def admin_action(c: types.CallbackQuery):
     try:
         _, act, oid, cid = c.data.split('_')
         l = user_langs.get(int(cid), 'en')
-        status = "✅ CONFIRMED" if act == 'ok' else "❌ DECLINED"
         
-        await bot.send_message(int(cid), STRINGS[l]['user_confirmed' if act == 'ok' else 'user_declined'].format(oid))
+        if act == 'ok':
+            status = "✅ CONFIRMED"
+            await bot.send_message(int(cid), STRINGS[l]['user_confirmed'].format(oid))
+        elif act == 'way':
+            status = "🚗 MASTER ON WAY"
+            await bot.send_message(int(cid), STRINGS[l]['user_on_way'], parse_mode="HTML")
+        else:
+            status = "❌ DECLINED"
+            await bot.send_message(int(cid), STRINGS[l]['user_declined'].format(oid))
+
         await c.answer(status)
         
-        # Обновляем текст с учетом HTML разметки
+        # Обновляем отчет админа, добавляя статус БЕЗ мусорных тегов
         final_text = c.message.html_text + f"\n\n{STRINGS[l]['status_final']}<b>{status}</b>"
         await bot.edit_message_text(
             text=final_text,
