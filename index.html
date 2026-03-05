@@ -6,6 +6,7 @@
     <title>aethestore Premium</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;800&display=swap" rel="stylesheet">
 
     <style>
@@ -16,6 +17,7 @@
             --hint-text: rgba(255, 255, 255, 0.5);
             --line-color: rgba(255, 255, 255, 0.15);
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --card-bg: rgba(255, 255, 255, 0.05);
         }
 
         body {
@@ -56,6 +58,25 @@
             to { transform: translate(50px, 100px) scale(1.2); }
         }
 
+        /* --- SKELETON LOAD --- */
+        .skeleton {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: skeleton-load 1.5s infinite;
+        }
+        @keyframes skeleton-load {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
         .container {
             width: 100%;
             max-width: 450px;
@@ -64,6 +85,7 @@
             flex-direction: column;
             box-sizing: border-box;
             z-index: 1;
+            transition: opacity 0.5s ease;
         }
 
         /* --- ЯЗЫК --- */
@@ -75,7 +97,7 @@
         }
 
         .lang-button {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
             border: 1px solid var(--line-color);
             color: var(--main-text);
             padding: 6px 12px;
@@ -84,6 +106,7 @@
             font-weight: 700;
             cursor: pointer;
             backdrop-filter: blur(10px);
+            transition: var(--transition);
         }
 
         .lang-button.active {
@@ -96,13 +119,12 @@
         .header-section { margin-bottom: 40px; }
 
         .header-section h1 {
-            font-family: 'JetBrains Mono', monospace; /* Твой любимый шрифт */
+            font-family: 'JetBrains Mono', monospace;
             font-size: 36px;
             font-weight: 800;
             margin: 0;
             color: var(--accent-color);
             letter-spacing: -1px;
-            text-transform: none; /* Маленькие буквы */
             min-height: 54px;
             display: flex;
             align-items: center;
@@ -152,6 +174,7 @@
             color: #ffffff;
             font-size: 17px;
             outline: none;
+            transition: border-color 0.3s ease;
         }
 
         input:focus { border-bottom-color: var(--accent-color); }
@@ -165,6 +188,7 @@
             padding: 10px;
             border-radius: 12px;
             font-size: 18px;
+            backdrop-filter: blur(10px);
         }
 
         .submit-btn {
@@ -178,6 +202,37 @@
             font-weight: 800;
             text-transform: uppercase;
             cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3); }
+            50% { box-shadow: 0 4px 30px rgba(255, 140, 0, 0.6); }
+            100% { box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3); }
+        }
+
+        /* --- ЭКРАН УСПЕХА --- */
+        #success-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #lottie-check { width: 200px; height: 200px; }
+        #success-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-top: 20px;
+            text-align: center;
         }
 
         .fade-text { transition: opacity 0.3s ease; }
@@ -191,7 +246,17 @@
         <div class="blob blob-2"></div>
     </div>
 
-    <div class="container">
+    <div id="skeleton-screen" class="container">
+        <div class="skeleton" style="height: 30px; width: 100px; align-self: flex-end; margin-bottom: 20px;"></div>
+        <div class="skeleton" style="height: 60px; width: 80%; margin-bottom: 40px;"></div>
+        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 50px; margin-bottom: 25px;"></div>
+        <div class="skeleton" style="height: 60px; border-radius: 18px;"></div>
+    </div>
+
+    <div class="container" id="main-app" style="opacity: 0; display: none;">
         
         <div class="language-container">
             <button id="lang-en" class="lang-button" onclick="setLanguage('en')">EN</button>
@@ -243,37 +308,42 @@
 
     </div>
 
+    <div id="success-screen">
+        <div id="lottie-check"></div>
+        <div id="success-text">BOOKING CONFIRMED<br>WE WILL CONTACT YOU SOON</div>
+    </div>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.setHeaderColor('#000000');
 
         const translations = {
-            en: { subtitle: "Premium Service", brand: "Device Brand", model: "Model & Memory", model_ph: "e.g. 16 Pro, 256GB", phone: "Phone Number", geo: "Location / Address", geo_ph: "Enter address or tap pin", issue: "Problem Description", issue_ph: "What needs to be fixed?", submit: "Confirm Booking" },
-            pl: { subtitle: "Serwis Premium", brand: "Marka urządzenia", model: "Model i Pamięć", model_ph: "np. 16 Pro, 256GB", phone: "Numer telefonu", geo: "Lokalizacja / Adres", geo_ph: "Wpisz adres lub kliknij pinezkę", issue: "Opis problemu", issue_ph: "Co należy naprawić?", submit: "Złóż zamówienie" },
-            ru: { subtitle: "Премиальный сервис", brand: "Бренд устройства", model: "Модель и Память", model_ph: "напр. 16 Pro, 256ГБ", phone: "Номер телефона", geo: "Локация / Адрес", geo_ph: "Введите адрес или нажмите на пин", issue: "Описание проблемы", issue_ph: "Что нужно починить?", submit: "Подтвердить запись" }
+            en: { subtitle: "Premium Service", brand: "Device Brand", model: "Model & Memory", model_ph: "e.g. 16 Pro, 256GB", phone: "Phone Number", geo: "Location / Address", geo_ph: "Enter address or tap pin", issue: "Problem Description", issue_ph: "What needs to be fixed?", submit: "Confirm Booking", success: "BOOKING CONFIRMED<br>WE WILL CONTACT YOU SOON" },
+            pl: { subtitle: "Serwis Premium", brand: "Marka urządzenia", model: "Model i Pamięć", model_ph: "np. 16 Pro, 256GB", phone: "Numer telefonu", geo: "Lokalizacja / Adres", geo_ph: "Wpisz adres lub kliknij pinezkę", issue: "Opis problemu", issue_ph: "Co należy naprawić?", submit: "Złóż zamówienie", success: "ZAMÓWIENIE POTWIERDZONE<br>SKONTAKTUJEMY SIĘ WKRÓTCE" },
+            ru: { subtitle: "Премиальный сервис", brand: "Бренд устройства", model: "Модель и Память", model_ph: "напр. 16 Pro, 256ГБ", phone: "Номер телефона", geo: "Локация / Адрес", geo_ph: "Введите адрес или нажмите на пин", issue: "Описание проблемы", issue_ph: "Что нужно починить?", submit: "Подтвердить запись", success: "ЗАПИСЬ ПОДТВЕРЖДЕНА<br>МЫ СКОРО С ВАМИ СВЯЖЕМСЯ" }
         };
 
         function runTypewriter() {
-            const words = ["aethestore", "service"]; // Только маленькими
+            const words = ["aethestore", "service"];
             const container = document.getElementById('text-node');
-            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 300;
+            let wordIndex = 0, charIndex = 0, isDeleting = false, typeSpeed = 200;
 
             function type() {
                 const currentWord = words[wordIndex];
                 if (isDeleting) {
                     container.innerHTML = currentWord.substring(0, charIndex - 1);
                     charIndex--;
-                    typeSpeed = 100;
+                    typeSpeed = 50;
                 } else {
                     container.innerHTML = currentWord.substring(0, charIndex + 1);
                     charIndex++;
-                    typeSpeed = 300;
+                    typeSpeed = 150;
                 }
 
                 if (!isDeleting && charIndex === currentWord.length) {
                     isDeleting = true;
-                    typeSpeed = 3000; // Пауза в конце
+                    typeSpeed = 2000;
                 } else if (isDeleting && charIndex === 0) {
                     isDeleting = false;
                     wordIndex = (wordIndex + 1) % words.length;
@@ -287,9 +357,12 @@
         function setLanguage(lang) {
             localStorage.setItem('aethe_lang', lang);
             document.querySelectorAll('.lang-button').forEach(b => b.classList.remove('active'));
-            document.getElementById('lang-' + lang).classList.add('active');
+            const btn = document.getElementById('lang-' + lang);
+            if(btn) btn.classList.add('active');
+            
             const targets = document.querySelectorAll('.fade-text');
             targets.forEach(t => t.classList.add('hidden'));
+            
             setTimeout(() => {
                 const t = translations[lang];
                 document.getElementById('app-subtitle').innerText = t.subtitle;
@@ -302,6 +375,7 @@
                 document.getElementById('lbl-issue').innerText = t.issue;
                 document.getElementById('inp-issue').placeholder = t.issue_ph;
                 document.getElementById('btn-submit').innerText = t.submit;
+                document.getElementById('success-text').innerHTML = t.success;
                 targets.forEach(t => t.classList.remove('hidden'));
             }, 300);
         }
@@ -314,6 +388,24 @@
                     document.getElementById('inp-location').value = `📍 ${lat}, ${lon}`;
                 }, () => tg.showAlert("Location access denied."));
             }
+        }
+
+        function showSuccess() {
+            document.getElementById('main-app').style.display = 'none';
+            const screen = document.getElementById('success-screen');
+            screen.style.display = 'flex';
+            setTimeout(() => screen.style.opacity = '1', 50);
+
+            lottie.loadAnimation({
+                container: document.getElementById('lottie-check'),
+                renderer: 'svg',
+                loop: false,
+                autoplay: true,
+                path: 'https://lottie.host/9c24095b-3b49-4786-8a7e-128c743e4987/j6IuE9G4W9.json'
+            });
+
+            tg.HapticFeedback.notificationOccurred('success');
+            setTimeout(() => tg.close(), 4000);
         }
 
         function sendDataToBot() {
@@ -332,11 +424,19 @@
             }
             tg.HapticFeedback.impactOccurred('heavy');
             tg.sendData(JSON.stringify(data));
+            showSuccess();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            runTypewriter();
-            setLanguage(localStorage.getItem('aethe_lang') || 'en');
+            // Имитация загрузки
+            setTimeout(() => {
+                document.getElementById('skeleton-screen').style.display = 'none';
+                const app = document.getElementById('main-app');
+                app.style.display = 'flex';
+                setTimeout(() => app.style.opacity = '1', 50);
+                runTypewriter();
+                setLanguage(localStorage.getItem('aethe_lang') || 'en');
+            }, 1000);
         });
     </script>
 </body>
