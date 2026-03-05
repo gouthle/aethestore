@@ -11,30 +11,32 @@ from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 # ==========================================
 # 1. CONFIGURATION
 # ==========================================
-# Токен и ID админа берутся из Environment Variables на Render
-API_TOKEN = os.getenv('BOT_TOKEN', '7719279464:AAHcG3fDRHAmX6jH8pTtT2_Zt6CyFhP6--8').strip()
-ADMIN_ID = int(os.getenv('ADMIN_ID', 931275762))
-WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_stable_v30'
+# Берем данные СТРОГО из Environment Variables для безопасности
+API_TOKEN = os.getenv('BOT_TOKEN', '').strip()
+ADMIN_ID_RAW = os.getenv('ADMIN_ID', '0').strip()
+ADMIN_ID = int(ADMIN_ID_RAW) if ADMIN_ID_RAW.isdigit() else 0
+
+# URL твоего Mini App
+WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_stable_v35'
 PORT = int(os.getenv('PORT', 10000))
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# --- МИНИ-СЕРВЕР ДЛЯ ОБХОДА ПЛАТНОГО ТАРИФА (KEEP-ALIVE) ---
-class FreeTierHandler(BaseHTTPRequestHandler):
+# --- HTTP SERVER FOR RENDER (Free Tier Keep-Alive) ---
+class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"aethestore is running on free tier!")
+        self.wfile.write(b"aethestore status: online")
     def log_message(self, format, *args): return
 
-def run_web_server():
-    server = HTTPServer(('0.0.0.0', PORT), FreeTierHandler)
+def run_server():
+    server = HTTPServer(('0.0.0.0', PORT), HealthCheckHandler)
     server.serve_forever()
 
-# Запуск в фоновом потоке, чтобы Render не убивал процесс
-threading.Thread(target=run_web_server, daemon=True).start()
+threading.Thread(target=run_server, daemon=True).start()
 
 # --- СЛОВАРЬ ПЕРЕВОДОВ ---
 STRINGS = {
@@ -137,12 +139,15 @@ async def handle_webapp_data(m: types.Message):
         s = STRINGS[lang]
         
         raw_loc = data.get('location', '')
-        # Исправленная гео-ссылка для Google Maps
         geo_link = f'<a href="https://www.google.com/maps?q={raw_loc.replace("📍", "").strip()}">Google Maps</a>' if "📍" in raw_loc else raw_loc
+
+        # Номер телефона теперь кликабельный (tel:...)
+        phone = data.get('phone', '').strip()
+        phone_link = f'<a href="tel:{phone}">{phone}</a>'
 
         report = (f"{s['adm_title'].format(oid)}\n\n"
                   f"{s['adm_device']}<b>{data.get('brand')} {data.get('device')}</b>\n"
-                  f"{s['adm_phone']}<code>{data.get('phone')}</code>\n"
+                  f"{s['adm_phone']}{phone_link}\n"
                   f"{s['adm_geo']}{geo_link}\n"
                   f"{s['adm_issue']}{data.get('problem')}\n"
                   f"{s['adm_user']}@{m.from_user.username}")
@@ -175,27 +180,25 @@ async def process_confirm(c: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data.startswith('adm_'))
 async def admin_action(c: types.CallbackQuery):
-    _, act, oid, cid = c.data.split('_')
-    l = user_langs.get(int(cid), 'en')
-    status = "✅ CONFIRMED" if act == 'ok' else "❌ DECLINED"
-    
-    # Отправляем уведомление пользователю
     try:
+        _, act, oid, cid = c.data.split('_')
+        l = user_langs.get(int(cid), 'en')
+        status = "✅ CONFIRMED" if act == 'ok' else "❌ DECLINED"
+        
         await bot.send_message(int(cid), STRINGS[l]['user_confirmed' if act == 'ok' else 'user_declined'].format(oid))
-    except:
-        logging.error("Could not send status to user")
-
-    await c.answer(status)
-    
-    # Обновляем сообщение админа (тебя) - ТЕПЕРЬ БЕЗ ТЕГОВ В ТЕКСТЕ
-    final_text = c.message.html_text + f"\n\n{STRINGS[l]['status_final']}<b>{status}</b>"
-    await bot.edit_message_text(
-        text=final_text, 
-        chat_id=ADMIN_ID, 
-        message_id=c.message.message_id, 
-        parse_mode="HTML", 
-        disable_web_page_preview=True
-    )
+        await c.answer(status)
+        
+        # Обновляем текст с учетом HTML разметки
+        final_text = c.message.html_text + f"\n\n{STRINGS[l]['status_final']}<b>{status}</b>"
+        await bot.edit_message_text(
+            text=final_text,
+            chat_id=ADMIN_ID,
+            message_id=c.message.message_id,
+            parse_mode="HTML",
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        logging.error(f"Admin action error: {e}")
 
 if __name__ == '__main__':
     print("--- aethestore Service Bot is Running ---")
