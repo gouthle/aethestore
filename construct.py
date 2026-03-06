@@ -8,236 +8,270 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 
-# ==========================================
-# 1. CONFIGURATION & STATUS
-# ==========================================
+# ==============================================================================
+# 1. КОНФИГУРАЦИЯ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+# ==============================================================================
+
+# Токен бота из BotFather
 API_TOKEN = os.getenv('BOT_TOKEN', '').strip()
+
+# Твой личный ID (узнать можно у @userinfobot)
 ADMIN_ID_RAW = os.getenv('ADMIN_ID', '0').strip()
 ADMIN_ID = int(ADMIN_ID_RAW) if ADMIN_ID_RAW.isdigit() else 0
 
-WEB_APP_URL = 'https://gouthle.github.io/aethestore/?v=final_ultra_v3'
+# Ссылка на твой Mini App (GitHub Pages)
+WEB_APP_URL = 'https://gouthle.github.io/aethestore/' 
+
+# Порт для сервера (Render/Railway используют 10000 по умолчанию)
 PORT = int(os.getenv('PORT', 10000))
 
-# Глобальный статус сервиса
+# Глобальный статус сервиса (управляется командами /open и /close)
 is_service_open = True 
 
-logging.basicConfig(level=logging.INFO)
+# Настройка детального логирования для отладки
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
+# Проверка наличия токена
 if not API_TOKEN:
-    logging.error("!!! КРИТИЧЕСКАЯ ОШИБКА: BOT_TOKEN не найден !!!")
+    logging.error("!!! КРИТИЧЕСКАЯ ОШИБКА: BOT_TOKEN отсутствует в переменных окружения !!!")
 
+# Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN) if API_TOKEN else None
 dp = Dispatcher(bot) if bot else None
 
-# --- HTTP SERVER (Keep-Alive) ---
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200); self.end_headers()
-        self.wfile.write(b"aethestore status: online")
-    def log_message(self, format, *args): return
+# Временное хранилище выбранных языков пользователей (в оперативной памяти)
+user_langs = {}
 
-def run_server():
+# ==============================================================================
+# 2. HTTP SERVER ДЛЯ ПОДДЕРЖАНИЯ ЖИЗНИ (KEEP-ALIVE)
+# ==============================================================================
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Минимальный сервер, чтобы Render не 'усыплял' бота"""
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"AetheStore Backend is Online and Running")
+    
+    def log_message(self, format, *args):
+        # Отключаем спам в консоль при каждом запросе мониторинга
+        return 
+
+def run_health_server():
     try:
+        logging.info(f"Запуск Health-Check сервера на порту {PORT}...")
         server = HTTPServer(('0.0.0.0', PORT), HealthCheckHandler)
         server.serve_forever()
     except Exception as e:
-        logging.error(f"Server error: {e}")
+        logging.error(f"Ошибка при запуске HTTP сервера: {e}")
 
-threading.Thread(target=run_server, daemon=True).start()
+# Запуск сервера в отдельном потоке, чтобы он не мешал работе бота
+threading.Thread(target=run_health_server, daemon=True).start()
 
-# --- СЛОВАРЬ ПЕРЕВОДОВ (Твой оригинал + добавки) ---
+# ==============================================================================
+# 3. ПОЛНЫЙ СЛОВАРЬ СИСТЕМНЫХ СООБЩЕНИЙ (MULTILANG)
+# ==============================================================================
+
 STRINGS = {
-    'en': {
-        'welcome': "Welcome to AetheStore! 👋\nProfessional repair service.",
-        'service_closed': "\n\n🌙 <b>Note: We are currently closed.</b> We will process your request tomorrow morning!",
-        'btn_app': "🛠 Book a Repair", 'btn_about': "ℹ️ About Us", 'btn_lang': "🌐 Language",
-        'about_text': "💎 <b>AetheStore</b>\nPremium electronics repair.\n📍 Rapid on-site service in Poland.",
-        'pay_msg': "Order #{} received! Please pay the deposit to confirm:",
-        'pay_btn': "💳 Pay Deposit",
-        'recept_msg': "💰 <b>Payment for #{}</b>\n\nSum: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nTap the button below after payment:",
-        'conf_btn': "✅ I have paid",
-        'thx_msg': "⏳ Request sent! The master will check and contact you soon.",
-        'lang_confirm': "English selected! 🇺🇸",
-        'adm_title': "🚨 <b>NEW ORDER #{}</b>",
-        'adm_off_tag': "\n⚠️ <b>OFF-HOURS ORDER</b>",
-        'adm_device': "📱 Device: ", 'adm_phone': "📞 Phone: ", 'adm_geo': "📍 Geo: ",
-        'adm_issue': "🔧 Issue: ", 'adm_user': "👤 User: ",
-        'adm_confirm_btn': "✅ Confirmed", 'adm_decline_btn': "❌ Decline", 'adm_way_btn': "🚗 On My Way",
-        'user_confirmed': "✅ Your payment for order #{} has been CONFIRMED!",
-        'user_declined': "❌ Payment for order #{} was not found.",
-        'user_on_way': "🚗 <b>Master is on the way!</b>\nExpect arrival in 20-40 minutes at your location.",
-        'status_final': "🏁 STATUS: "
-    },
     'ru': {
-        'welcome': "Добро пожаловать в AetheStore! 👋\nРемонт iPhone и техники.",
-        'service_closed': "\n\n🌙 <b>Сейчас мы закрыты.</b> Мы обработаем вашу заявку завтра утром!",
-        'btn_app': "🛠 Оформить ремонт", 'btn_about': "ℹ️ О нас", 'btn_lang': "🌐 Язык",
-        'about_text': "💎 <b>AetheStore</b>\nПрофессиональный ремонт.\n📍 Выезд к клиенту по Кракову.",
-        'pay_msg': "Заявка #{} принята! Внесите депозит:",
-        'pay_btn': "💳 Оплатить депозит",
-        'recept_msg': "💰 <b>Оплата заказа #{}</b>\n\nСумма: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nНажми после оплаты:",
-        'conf_btn': "✅ Я оплатил",
-        'thx_msg': "⏳ Запрос отправлен! Мастер проверит оплату.",
-        'lang_confirm': "Выбран русский! 🇷🇺",
-        'adm_title': "🚨 <b>НОВАЯ ЗАЯВКА #{}</b>",
-        'adm_off_tag': "\n⚠️ <b>ВНЕРАБОЧЕЕ ВРЕМЯ</b>",
-        'adm_device': "📱 Девайс: ", 'adm_phone': "📞 Тел: ", 'adm_geo': "📍 Гео: ",
-        'adm_issue': "🔧 Проблема: ", 'adm_user': "👤 Юзер: ",
-        'adm_confirm_btn': "✅ Ок", 'adm_decline_btn': "❌ Нет", 'adm_way_btn': "🚗 Выехал",
-        'user_confirmed': "✅ Ваша оплата заказа #{} ПОДТВЕРЖДЕНА!",
-        'user_declined': "❌ Оплата заказа #{} не найдена.",
-        'user_on_way': "🚗 <b>Мастер уже выехал!</b>\nОжидайте прибытия через 20-40 минут по вашему адресу.",
-        'status_final': "🏁 СТАТУС: "
+        'welcome': "💎 <b>AetheStore Premium Service</b>\n\nПрофессиональный ремонт электроники в Кракове.\n\nНажмите кнопку ниже, чтобы заказать ремонт или узнать стоимость услуг.",
+        'closed_msg': "\n\n🌙 <b>Сейчас мы закрыты</b>, но принимаем предзаказы! Мы свяжемся с вами в рабочее время.",
+        'btn_app': "🛠 Оформить ремонт",
+        'order_ok': "✅ <b>Заявка #{} принята!</b>\n\nМастер изучит детали и свяжется с вами по номеру {} для подтверждения времени.",
+        'dep_btn': "💳 Внести депозит 50 PLN",
+        'blik_info': "💰 <b>Оплата заказа #{}</b>\n\nСумма к оплате: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nПожалуйста, пришлите скриншот подтверждения в этот чат.",
+        'adm_new': "🚨 <b>НОВЫЙ ЗАКАЗ #{}</b>",
+        'adm_prio': "\n⚡ <b>ASAP PRIORITY (СРОЧНО)</b>",
+        'adm_dev': "📱 Девайс: ",
+        'adm_srv': "🔧 Услуга: ",
+        'adm_iss': "📋 Проблема: ",
+        'adm_ph': "📞 Тел: ",
+        'adm_loc': "📍 Локация: ",
+        'adm_prc': "💰 Цена: ",
+        'adm_user': "👤 Клиент: ",
+        'status': "🏁 СТАТУС: ",
+        'ok': "✅ Принят",
+        'no': "❌ Отказ",
+        'way': "🚗 Выехал"
+    },
+    'en': {
+        'welcome': "💎 <b>AetheStore Premium Service</b>\n\nProfessional electronics repair in Kraków.\n\nTap the button below to book a repair or check service prices.",
+        'closed_msg': "\n\n🌙 <b>We are currently closed</b>, but we accept pre-orders! We will contact you during business hours.",
+        'btn_app': "🛠 Book a Repair",
+        'order_ok': "✅ <b>Order #{} accepted!</b>\n\nThe technician will call you at {} to confirm the appointment time.",
+        'dep_btn': "💳 Pay Deposit 50 PLN",
+        'blik_info': "💰 <b>Payment for #{}</b>\n\nAmount: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nPlease send a screenshot of the payment here.",
+        'adm_new': "🚨 <b>NEW ORDER #{}</b>",
+        'adm_prio': "\n⚡ <b>ASAP PRIORITY</b>",
+        'adm_dev': "📱 Device: ",
+        'adm_srv': "🔧 Service: ",
+        'adm_iss': "📋 Issue: ",
+        'adm_ph': "📞 Phone: ",
+        'adm_loc': "📍 Location: ",
+        'adm_prc': "💰 Price: ",
+        'adm_user': "👤 User: ",
+        'status': "🏁 STATUS: ",
+        'ok': "✅ Confirmed",
+        'no': "❌ Declined",
+        'way': "🚗 On my way"
     },
     'pl': {
-        'welcome': "Witaj w AetheStore! 👋\nNaprawa sprzętu premium.",
-        'service_closed': "\n\n🌙 <b>Obecnie jesteśmy zamknięci.</b> Skontaktujemy się z Tobą jutro rano!",
-        'btn_app': "🛠 Zleć naprawę", 'btn_about': "ℹ️ O nas", 'btn_lang': "🌐 Język",
-        'about_text': "💎 <b>AetheStore</b>\nSpecjalistyczna naprawa.\n📍 Szybki dojazd do klienta.",
-        'pay_msg': "Zlecenie #{} przyjęte! Wpłać depozyt:",
-        'pay_btn': "💳 Zapłać depozyt",
-        'recept_msg': "💰 <b>Płatność za #{}</b>\n\nKwota: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nKliknij po zapłaceniu:",
-        'conf_btn': "✅ Zapłacone",
-        'thx_msg': "⏳ Prośba wysłana! Sprawdzamy wpłatę.",
-        'lang_confirm': "Wybrano język polski! 🇵🇱",
-        'adm_title': "🚨 <b>NOWE ZLECENIE #{}</b>",
-        'adm_off_tag': "\n⚠️ <b>POZA GODZINAMI PRACY</b>",
-        'adm_device': "📱 Urządzenie: ", 'adm_phone': "📞 Telefon: ", 'adm_geo': "📍 Lok: ",
-        'adm_issue': "🔧 Problem: ", 'adm_user': "👤 Klient: ",
-        'adm_confirm_btn': "✅ Ok", 'adm_decline_btn': "❌ Nie", 'adm_way_btn': "🚗 Jadę",
-        'user_confirmed': "✅ Wpłata za #{} POTWIERDZONA!",
-        'user_declined': "❌ Płatność za #{} nie znaleziona.",
-        'user_on_way': "🚗 <b>Specjalista jest w drodze!</b>\nSpodziewaj się przyjazdu za 20-40 minut.",
-        'status_final': "🏁 STATUS: "
+        'welcome': "💎 <b>AetheStore Premium Service</b>\n\nProfesjonalna naprawa sprzętu w Krakowie.\n\nKliknij przycisk poniżej, aby zamówić naprawę lub sprawdzić cennik.",
+        'closed_msg': "\n\n🌙 <b>Obecnie jesteśmy zamknięci</b>, ale przyjmujemy zamówienia! Skontaktujemy się z Tobą rano.",
+        'btn_app': "🛠 Zleć naprawę",
+        'order_ok': "✅ <b>Zlecenie #{} przyjęte!</b>\n\nZadzwonimy pod numer {} w celu ustalenia godziny wizyty.",
+        'dep_btn': "💳 Zapłać depozyt 50 PLN",
+        'blik_info': "💰 <b>Płatność za #{}</b>\n\nKwota: <b>50 PLN</b>\n🅿️ BLIK: <code>+48 725 322 335</code>\n\nProsimy o przesłanie potwierdzenia płatności w tej wiadomości.",
+        'adm_new': "🚨 <b>NOWE ZLECENIE #{}</b>",
+        'adm_prio': "\n⚡ <b>ASAP PRIORITY (PILNE)</b>",
+        'adm_dev': "📱 Urządzenie: ",
+        'adm_srv': "🔧 Usługa: ",
+        'adm_iss': "📋 Problem: ",
+        'adm_ph': "📞 Telefon: ",
+        'adm_loc': "📍 Lokalizacja: ",
+        'adm_prc': "💰 Cena: ",
+        'adm_user': "👤 Klient: ",
+        'status': "🏁 STATUS: ",
+        'ok': "✅ Przyjęte",
+        'no': "❌ Odrzucone",
+        'way': "🚗 Specjalista jedzie"
     }
 }
 
-user_langs = {}
+# ==============================================================================
+# 4. ОБРАБОТЧИКИ БАЗОВЫХ КОМАНД
+# ==============================================================================
 
-def get_main_kb(uid):
-    lang = user_langs.get(uid, 'en')
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(types.KeyboardButton(STRINGS[lang]['btn_app'], web_app=WebAppInfo(url=WEB_APP_URL)))
-    markup.add(STRINGS[lang]['btn_about'], STRINGS[lang]['btn_lang'])
-    return markup
-
-# --- КОМАНДЫ УПРАВЛЕНИЯ ---
-@dp.message_handler(commands=['open'], user_id=ADMIN_ID)
-async def cmd_open(m: types.Message):
-    global is_service_open
-    is_service_open = True
-    await m.answer("✅ Сервис открыт!")
-
-@dp.message_handler(commands=['close'], user_id=ADMIN_ID)
-async def cmd_close(m: types.Message):
-    global is_service_open
-    is_service_open = False
-    await m.answer("🌙 Сервис закрыт (режим отдыха).")
-
-# --- ОСНОВНАЯ ЛОГИКА ---
 @dp.message_handler(commands=['start'])
 async def cmd_start(m: types.Message):
+    """Приветствие и выдача кнопки Mini App"""
     uid = m.from_user.id
-    if uid not in user_langs: user_langs[uid] = 'en'
-    text = STRINGS[user_langs[uid]]['welcome']
+    
+    # Пытаемся определить язык пользователя из настроек его Telegram
+    lang = m.from_user.language_code if m.from_user.language_code in STRINGS else 'ru'
+    user_langs[uid] = lang
+    
+    # Создаем клавиатуру с кнопкой Web App
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(types.KeyboardButton(STRINGS[lang]['btn_app'], web_app=WebAppInfo(url=WEB_APP_URL)))
+    
+    msg = STRINGS[lang]['welcome']
+    # Добавляем приписку, если сервис закрыт
     if not is_service_open:
-        text += STRINGS[user_langs[uid]]['service_closed']
-    await m.answer(text, reply_markup=get_main_kb(uid), parse_mode="HTML")
+        msg += STRINGS[lang]['closed_msg']
+        
+    await m.answer(msg, reply_markup=kb, parse_mode="HTML")
 
-@dp.message_handler(lambda m: any(m.text == STRINGS[l]['btn_lang'] for l in STRINGS))
-async def show_lang_menu(m: types.Message):
-    kb = InlineKeyboardMarkup(row_width=1)
-    for code, name in [('en', "🇺🇸 English"), ('pl', "🇵🇱 Polski"), ('ru', "🇷🇺 Русский")]:
-        kb.add(InlineKeyboardButton(name, callback_data=f"sl_{code}"))
-    await m.answer("Choose language:", reply_markup=kb)
+@dp.message_handler(commands=['open', 'close'], user_id=ADMIN_ID)
+async def cmd_toggle_service(m: types.Message):
+    """Админ-команды для управления статусом работы"""
+    global is_service_open
+    is_service_open = (m.text == '/open')
+    status_text = "ОТКРЫТО ✅" if is_service_open else "ЗАКРЫТО 🌙"
+    await m.answer(f"Статус сервиса успешно обновлен: <b>{status_text}</b>", parse_mode="HTML")
 
-@dp.callback_query_handler(lambda c: c.data.startswith('sl_'))
-async def callback_set_lang(c: types.CallbackQuery):
-    lang = c.data.split('_')[1]
-    user_langs[c.from_user.id] = lang
-    await c.answer()
-    await bot.send_message(c.from_user.id, STRINGS[lang]['lang_confirm'], reply_markup=get_main_kb(c.from_user.id))
-
-@dp.message_handler(lambda m: any(m.text == STRINGS[l]['btn_about'] for l in STRINGS))
-async def cmd_about(m: types.Message):
-    lang = user_langs.get(m.from_user.id, 'en')
-    await m.answer(STRINGS[lang]['about_text'], parse_mode="HTML")
+# ==============================================================================
+# 5. ОБРАБОТКА ДАННЫХ ИЗ MINI APP (WEB APP DATA)
+# ==============================================================================
 
 @dp.message_handler(content_types='web_app_data')
 async def handle_webapp_data(m: types.Message):
+    """Прием JSON данных из формы Mini App"""
     try:
-        lang = user_langs.get(m.from_user.id, 'en')
-        data = json.loads(m.web_app_data.data)
-        oid = str(uuid.uuid4())[:6].upper()
+        # Получаем язык пользователя для ответа
+        lang = user_langs.get(m.from_user.id, 'ru')
         s = STRINGS[lang]
         
-        raw_loc = data.get('location', '')
-        geo_link = f'<a href="https://www.google.com/maps?q={raw_loc.replace("📍", "").strip()}">Google Maps 📍</a>' if "📍" in raw_loc else raw_loc
-        phone = data.get('phone', '').strip()
-        phone_link = f'<a href="tel:{phone}">{phone}</a>'
-
-        report = f"{s['adm_title'].format(oid)}"
-        if not is_service_open: report += s['adm_off_tag']
+        # Парсим входящий JSON
+        data = json.loads(m.web_app_data.data)
         
-        report += (f"\n\n{s['adm_device']}<b>{data.get('brand')} {data.get('device')}</b>\n"
-                  f"{s['adm_phone']}{phone_link}\n"
-                  f"{s['adm_geo']}{geo_link}\n"
-                  f"{s['adm_issue']}{data.get('problem')}\n"
-                  f"{s['adm_user']}@{m.from_user.username or 'id'+str(m.from_user.id)}")
+        # Генерируем уникальный короткий ID заказа
+        oid = str(uuid.uuid4())[:6].upper()
+        
+        # Подсчет итоговой цены (базовая цена + 50 PLN за ASAP)
+        base_price = int(data.get('price', 0))
+        priority_fee = 50 if data.get('priority') else 0
+        total_price = base_price + priority_fee
+        
+        # Формируем детальный отчет для ТЕБЯ (Админа)
+        report = (
+            f"{s['adm_new'].format(oid)}"
+            f"{s['adm_prio'] if data.get('priority') else ''}\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"{s['adm_dev']}<b>{data.get('brand')} {data.get('device')}</b>\n"
+            f"{s['adm_srv']}{data.get('service')}\n"
+            f"{s['adm_iss']}{data.get('problem')}\n"
+            f"{s['adm_ph']}<code>{data.get('phone')}</code>\n"
+            f"{s['adm_loc']}<code>{data.get('location')}</code>\n"
+            f"{s['adm_prc']}<b>{total_price} PLN</b>\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"{s['adm_user']}@{m.from_user.username or m.from_user.id}"
+        )
 
+        # Клавиатура управления заказом для админа
         adm_kb = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton(s['adm_confirm_btn'], callback_data=f"adm_ok_{oid}_{m.from_user.id}"),
-            InlineKeyboardButton(s['adm_way_btn'], callback_data=f"adm_way_{oid}_{m.from_user.id}"),
-            InlineKeyboardButton(s['adm_decline_btn'], callback_data=f"adm_no_{oid}_{m.from_user.id}"))
+            InlineKeyboardButton("✅ Ок", callback_data=f"adm_ok_{oid}_{m.from_user.id}"),
+            InlineKeyboardButton("🚗 Выехал", callback_data=f"adm_way_{oid}_{m.from_user.id}"),
+            InlineKeyboardButton("❌ Отказ", callback_data=f"adm_no_{oid}_{m.from_user.id}")
+        )
 
-        await bot.send_message(ADMIN_ID, report, parse_mode="HTML", reply_markup=adm_kb, disable_web_page_preview=True)
-        
-        pay_kb = InlineKeyboardMarkup().add(InlineKeyboardButton(s['pay_btn'], callback_data=f"p_{oid}"))
-        await m.answer(s['pay_msg'].format(oid), reply_markup=pay_kb, parse_mode="HTML")
+        # Отправляем отчет тебе
+        await bot.send_message(ADMIN_ID, report, parse_mode="HTML", reply_markup=adm_kb)
+
+        # Отправляем подтверждение и кнопку оплаты КЛИЕНТУ
+        client_kb = InlineKeyboardMarkup().add(
+            InlineKeyboardButton(s['pay_dep_btn'], callback_data=f"user_pay_{oid}")
+        )
+        await m.answer(s['order_ok'].format(oid, data.get('phone')), reply_markup=client_kb, parse_mode="HTML")
+
     except Exception as e:
-        logging.error(f"Error WebApp Data: {e}")
+        logging.error(f"Ошибка при обработке WebApp данных: {e}")
+        await m.answer("⚠️ Произошла техническая ошибка. Пожалуйста, попробуйте еще раз.")
 
-@dp.callback_query_handler(lambda c: c.data.startswith('p_'))
-async def process_pay(c: types.CallbackQuery):
-    oid = c.data.split('_')[1]
-    lang = user_langs.get(c.from_user.id, 'en')
-    kb = InlineKeyboardMarkup().add(InlineKeyboardButton(STRINGS[lang]['conf_btn'], callback_data=f"ok_{oid}"))
-    await bot.send_message(c.from_user.id, STRINGS[lang]['recept_msg'].format(oid), reply_markup=kb, parse_mode="HTML")
-    await c.answer()
+# ==============================================================================
+# 6. ОБРАБОТКА CALLBACK КНОПОК (КНОПКИ В ЧАТЕ)
+# ==============================================================================
 
-@dp.callback_query_handler(lambda c: c.data.startswith('ok_'))
-async def process_confirm(c: types.CallbackQuery):
-    oid = c.data.split('_')[1]
-    lang = user_langs.get(c.from_user.id, 'en')
-    await bot.send_message(ADMIN_ID, f"💰 <b>BLIK CHECK!</b> Order #{oid} by @{c.from_user.username or c.from_user.id}", parse_mode="HTML")
-    await bot.send_message(c.from_user.id, STRINGS[lang]['thx_msg'])
-    await c.answer()
+@dp.callback_query_handler(lambda c: True)
+async def process_all_callbacks(c: types.CallbackQuery):
+    """Обработка всех нажатий на inline-кнопки"""
+    lang = user_langs.get(c.from_user.id, 'ru')
+    s = STRINGS[lang]
 
-@dp.callback_query_handler(lambda c: c.data.startswith('adm_'))
-async def admin_action(c: types.CallbackQuery):
-    try:
+    # Обработка действий Админа (Принять / Выехать / Отказать)
+    if c.data.startswith('adm_'):
         _, act, oid, cid = c.data.split('_')
-        l = user_langs.get(int(cid), 'en')
-        status = "✅ CONFIRMED" if act == 'ok' else "🚗 MASTER ON WAY" if act == 'way' else "❌ DECLINED"
         
-        if act == 'ok':
-            await bot.send_message(int(cid), STRINGS[l]['user_confirmed'].format(oid))
-        elif act == 'way':
-            await bot.send_message(int(cid), STRINGS[l]['user_on_way'], parse_mode="HTML")
-        else:
-            await bot.send_message(int(cid), STRINGS[l]['user_declined'].format(oid))
+        # Определяем текст статуса
+        status_label = s['ok'] if act == 'ok' else s['way'] if act == 'way' else s['no']
+        
+        # Уведомляем клиента об изменении статуса
+        client_notification = f"Заказ #{oid}: <b>{status_label}</b>"
+        if act == 'way':
+            client_notification += f"\n{s['way']}. Ожидайте мастера в течение часа."
+            
+        await bot.send_message(int(cid), client_notification, parse_mode="HTML")
+        await c.answer(status_label)
+        
+        # Визуально обновляем сообщение в чате админа (убираем кнопки и пишем статус)
+        new_admin_text = c.message.html_text + f"\n\n{s['status']}<b>{status_label}</b>"
+        await c.message.edit_text(new_admin_text, parse_mode="HTML", reply_markup=None)
 
-        await c.answer(status)
-        
-        # Обновляем сообщение у админа, сохраняя форматирование
-        current_text = c.message.html_text.split(STRINGS[l]['status_final'])[0].strip()
-        new_report = f"{current_text}\n\n{STRINGS[l]['status_final']}<b>{status}</b>"
-        
-        await c.message.edit_text(new_report, parse_mode="HTML", reply_markup=c.message.reply_markup, disable_web_page_preview=True)
-    except Exception as e:
-        logging.error(f"Admin action error: {e}")
+    # Обработка кнопки "Внести депозит" у клиента
+    elif c.data.startswith('user_pay_'):
+        oid = c.data.split('_')[2]
+        await bot.send_message(c.from_user.id, s['blik_info'].format(oid), parse_mode="HTML")
+        await c.answer()
+
+# ==============================================================================
+# 7. ЗАПУСК БОТА
+# ==============================================================================
 
 if __name__ == '__main__':
     if dp:
-        print("--- aethestore Service Bot is Running ---")
+        logging.info("--- AetheStore Premium Bot Started Successfully ---")
         executor.start_polling(dp, skip_updates=True)
